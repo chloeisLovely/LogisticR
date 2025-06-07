@@ -67,7 +67,7 @@ def plot_confusion_matrix(y_true, y_pred):
     return fig
 
 # Streamlit App
-st.title("Loan Default Prediction - ROC Dashboard")
+st.title("Loan Default Prediction - ROC")
 
 train, test = load_data()
 if train is not None and test is not None:
