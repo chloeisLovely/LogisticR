@@ -17,7 +17,7 @@ def load_data():
         st.error("CSV file loading failed. Please check file format and location.")
         return None, None
 
-    expected_cols = ["homeowner", "income", "dti", "fico", "loanst"]
+    expected_cols = ["home_ownership", "income", "dti", "fico", "loan_status"]
     if train.shape[1] == 5:
         train.columns = expected_cols
     if test.shape[1] == 5:
@@ -30,8 +30,8 @@ def load_data():
 
 # Train logistic regression model
 def train_model(train):
-    X_train = train[["homeowner", "income", "dti", "fico"]]
-    y_train = train["loanst"]
+    X_train = train[["home_ownership", "income", "dti", "fico"]]
+    y_train = train["loan_status"]
     model = LogisticRegression()
     model.fit(X_train, y_train)
     return model
@@ -68,8 +68,8 @@ train, test = load_data()
 if train is not None and test is not None:
     model = train_model(train)
 
-    X_test = test[["homeowner", "income", "dti", "fico"]]
-    y_test = test["loanst"]
+    X_test = test[["home_ownership", "income", "dti", "fico"]]
+    y_test = test["loan_status"]
     pred_probs = model.predict_proba(X_test)[:, 1]
 
     threshold = st.slider("Select Classification Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
