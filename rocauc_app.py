@@ -1,0 +1,81 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_curve, auc, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load data
+def load_data():
+    train = pd.read_csv("lendingclub_traindata.csv")
+    test = pd.read_csv("lendingclub_testdata.csv")
+    columns = ["homeowner", "income", "dti", "fico", "loanst"]
+    train.columns = columns
+    test.columns = columns
+    train["income"] = train["income"] / 1000
+    test["income"] = test["income"] / 1000
+    return train, test
+
+# Train model
+def train_model(train):
+    X_train = train[["homeowner", "income", "dti", "fico"]]
+    y_train = train["loanst"]
+    model = LogisticRegression()
+    model.fit(X_train, y_train)
+    return model
+
+# Plot ROC
+def plot_roc(y_true, y_scores):
+    fpr, tpr, _ = roc_curve(y_true, y_scores)
+    roc_auc = auc(fpr, tpr)
+    fig, ax = plt.subplots()
+    ax.plot(fpr, tpr, color='blue', label=f'ROC curve (AUC = {roc_auc:.2f})')
+    ax.plot([0, 1], [0, 1], color='red', linestyle='--')
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('ROC Curve')
+    ax.legend(loc='lower right')
+    return fig, roc_auc
+
+# Plot Confusion Matrix
+def plot_confusion_matrix(y_true, y_pred):
+    cm = confusion_matrix(y_true, y_pred)
+    fig, ax = plt.subplots()
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['No Default', 'Default'], yticklabels=['No Default', 'Default'])
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    ax.set_title('Confusion Matrix')
+    return fig
+
+# Streamlit App
+st.title("Loan Default Prediction - ROC Dashboard")
+
+# Load data and model
+train, test = load_data()
+model = train_model(train)
+
+X_test = test[["homeowner", "income", "dti", "fico"]]
+y_test = test["loanst"]
+pred_probs = model.predict_proba(X_test)[:, 1]
+
+# Threshold slider
+threshold = st.slider("Select Classification Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
+pred_labels = (pred_probs >= threshold).astype(int)
+
+# Display metrics
+st.subheader("ROC Curve")
+roc_fig, roc_auc = plot_roc(y_test, pred_probs)
+st.pyplot(roc_fig)
+st.write(f"AUC Score: {roc_auc:.3f}")
+
+st.subheader("Confusion Matrix at Threshold = {:.2f}".format(threshold))
+cm_fig = plot_confusion_matrix(y_test, pred_labels)
+st.pyplot(cm_fig)
+
+# Optional: Accuracy & F1
+from sklearn.metrics import accuracy_score, f1_score
+acc = accuracy_score(y_test, pred_labels)
+f1 = f1_score(y_test, pred_labels)
+st.write(f"Accuracy: {acc:.2f}")
+st.write(f"F1 Score: {f1:.2f}")
