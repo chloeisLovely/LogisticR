@@ -36,21 +36,21 @@ def train_model(train):
     model.fit(X_train, y_train)
     return model
 
-# Plot ROC curve at current threshold
+# Plot ROC curve at current threshold and highlight AUC
 def plot_roc_with_point(y_true, y_scores, threshold):
     fpr, tpr, thresholds = roc_curve(y_true, y_scores)
     roc_auc = auc(fpr, tpr)
     fig, ax = plt.subplots()
-    ax.plot(fpr, tpr, color='blue', label=f'ROC curve (AUC = {roc_auc:.2f})')
+    ax.plot(fpr, tpr, color='blue', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+    ax.fill_between(fpr, tpr, alpha=0.2, color='blue')  # AUC 영역 강조
     ax.plot([0, 1], [0, 1], color='red', linestyle='--')
-    
-    # highlight the current threshold point
+
     idx = np.argmin(np.abs(thresholds - threshold))
     ax.plot(fpr[idx], tpr[idx], 'o', color='green', markersize=10, label=f'Threshold = {threshold:.2f}')
 
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
-    ax.set_title('ROC Curve')
+    ax.set_title('ROC Curve with AUC')
     ax.legend(loc='lower right')
     return fig, roc_auc
 
@@ -67,7 +67,7 @@ def plot_confusion_matrix(y_true, y_pred):
     return fig
 
 # Streamlit App
-st.title("Loan Default Prediction - ROC")
+st.title("Loan Default Prediction - ROC Dashboard")
 
 train, test = load_data()
 if train is not None and test is not None:
@@ -80,7 +80,7 @@ if train is not None and test is not None:
     threshold = st.slider("Select Classification Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
     pred_labels = (pred_probs >= threshold).astype(int)
 
-    st.subheader("ROC Curve")
+    st.subheader("ROC Curve and AUC")
     roc_fig, roc_auc = plot_roc_with_point(y_test, pred_probs, threshold)
     st.pyplot(roc_fig)
     st.write(f"AUC Score: {roc_auc:.3f}")
